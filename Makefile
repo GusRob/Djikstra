@@ -1,41 +1,66 @@
-# A simple Makefile for compiling small SDL projects
+PROJECT_NAME := main
 
-# set the compiler
-CC := clang
+BUILD_DIR := build
 
-# set the compiler flags
-CFLAGS := `sdl2-config --libs --cflags` -ggdb3 -O0 --std=c99 -Wall -lSDL2_image $(shell sdl2-config --cflags) -Wall -O
-# add header files here
-HDRS :=
+# Define the names of key files
+SOURCE_FILE := src/$(PROJECT_NAME).cpp
+OBJECT_FILE := $(BUILD_DIR)/$(PROJECT_NAME).o
+EXECUTABLE := $(BUILD_DIR)/$(PROJECT_NAME)
+SDW_DIR := ./libs/sdw/
+SDW_SOURCE_FILES := $(wildcard $(SDW_DIR)*.cpp)
+SDW_OBJECT_FILES := $(patsubst $(SDW_DIR)%.cpp, $(BUILD_DIR)/%.o, $(SDW_SOURCE_FILES))
 
-# add source files here
-SRCS := main.c
+# Build settings
+COMPILER := clang++
+COMPILER_OPTIONS := -c -pipe -Wall -std=c++11 # If you have an older compiler, you might have to use -std=c++0x
+DEBUG_OPTIONS := -ggdb -g3
+FUSSY_OPTIONS := -Werror -pedantic
+SANITIZER_OPTIONS := -O1 -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer
+SPEEDY_OPTIONS := -Ofast -funsafe-math-optimizations -march=native
+LINKER_OPTIONS :=
 
-# generate names of object files
-OBJS := $(SRCS:.c=.o)
+# Set up flags
+SDW_COMPILER_FLAGS := -I$(SDW_DIR)
+# If you have a manual install of SDL, you might not have sdl2-config installed, so the following line might not work
+# Compiler flags should look something like: -I/usr/local/include/SDL2 -D_THREAD_SAFE
+SDL_COMPILER_FLAGS := $(shell sdl2-config --cflags)
+# If you have a manual install of SDL, you might not have sdl2-config installed, so the following line might not work
+# Linker flags should look something like: -L/usr/local/lib -lSDL2
+SDL_LINKER_FLAGS := $(shell sdl2-config --libs)
+SDW_LINKER_FLAGS := $(SDW_OBJECT_FILES)
 
-# name of executable
-EXEC := main
+default: debug
 
-# default recipe
-all: $(EXEC)
+# Rule to compile and link for use with a debugger (although works fine even if you aren't using a debugger !)
+debug: $(SDW_OBJECT_FILES)
+	$(COMPILER) $(COMPILER_OPTIONS) $(DEBUG_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS)
+	$(COMPILER) $(LINKER_OPTIONS) $(DEBUG_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
+	./$(EXECUTABLE)
 
-showfont: showfont.c Makefile
-	$(CC) -o $@ $@.c $(CFLAGS) $(LIBS)
+# Rule to help find runtime errors (when you get a segmentation fault)
+# NOTE: This needs the "Address Sanitizer" library to be installed in order to work (so it might not work on lab machines !)
+diagnostic: $(SDW_OBJECT_FILES)
+	$(COMPILER) $(COMPILER_OPTIONS) $(FUSSY_OPTIONS) $(SANITIZER_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS)
+	$(COMPILER) $(LINKER_OPTIONS) $(FUSSY_OPTIONS) $(SANITIZER_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
+	./$(EXECUTABLE)
 
-glfont: glfont.c Makefile
-	$(CC) -o $@ $@.c $(CFLAGS) $(LIBS)
+# Rule to build for high performance executable (for manually testing interaction)
+speedy: $(SDW_OBJECT_FILES)
+	$(COMPILER) $(COMPILER_OPTIONS) $(SPEEDY_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS)
+	$(COMPILER) $(LINKER_OPTIONS) $(SPEEDY_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
+	./$(EXECUTABLE)
 
-# recipe for building the final executable
-$(EXEC): $(OBJS) $(HDRS) Makefile
-	$(CC) -o $@ $(OBJS) $(CFLAGS)
+# Rule to compile and link for final production release
+production: $(SDW_OBJECT_FILES)
+	$(COMPILER) $(COMPILER_OPTIONS) -o $(OBJECT_FILE) $(SOURCE_FILE) $(SDL_COMPILER_FLAGS) $(SDW_COMPILER_FLAGS)
+	$(COMPILER) $(LINKER_OPTIONS) -o $(EXECUTABLE) $(OBJECT_FILE) $(SDW_LINKER_FLAGS) $(SDL_LINKER_FLAGS)
+	./$(EXECUTABLE)
 
-# recipe for building object files
-#$(OBJS): $(@:.o=.c) $(HDRS) Makefile
-#	$(CC) -o $@ $(@:.o=.c) -c $(CFLAGS)
+# Rule for building all of the the DisplayWindow classes
+$(BUILD_DIR)/%.o: $(SDW_DIR)%.cpp
+	@mkdir -p $(BUILD_DIR)
+	$(COMPILER) $(COMPILER_OPTIONS) -c -o $@ $^ $(SDL_COMPILER_FLAGS)
 
-# recipe to clean the workspace
+# Files to remove during clean
 clean:
-	rm -f $(EXEC) $(OBJS)
-
-.PHONY: all clean
+	rm $(BUILD_DIR)/*
