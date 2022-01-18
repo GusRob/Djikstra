@@ -1,10 +1,21 @@
 #include <DrawingWindow.h>
+#include <Colour.h>
 #include <fstream>
 #include <vector>
 
 #define WIDTH 700
 #define HEIGHT 700
 
+std::string currentMap = "example";
+
+//updates the current map image and graph by reading the new file
+void updateMap(std::string newMap){
+	if(currentMap != newMap){
+		currentMap = newMap;
+	}
+}
+
+//circle drawing function, takes enter x and y as well as a radius
 void drawCircle(DrawingWindow &window, int cx, int cy, int r){
 	float red = 255;
 	float green = 255;
@@ -20,6 +31,7 @@ void drawCircle(DrawingWindow &window, int cx, int cy, int r){
 	}
 }
 
+//main draw function for page refreshes
 void draw(DrawingWindow &window) {
 	window.clearPixels();
 	/*
@@ -37,6 +49,7 @@ void draw(DrawingWindow &window) {
 	drawCircle(window, 100, 100, 5);
 }
 
+//event handler, after initial cleanse for quit function
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
 		if (event.key.keysym.sym == SDLK_LEFT) std::cout << "LEFT" << std::endl;
@@ -44,11 +57,12 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 		else if (event.key.keysym.sym == SDLK_UP) std::cout << "UP" << std::endl;
 		else if (event.key.keysym.sym == SDLK_DOWN) std::cout << "DOWN" << std::endl;
 	} else if (event.type == SDL_MOUSEBUTTONDOWN) {
-		window.savePPM("output.ppm");
-		window.saveBMP("output.bmp");
+		//window.savePPM("output.ppm");
+		//window.saveBMP("output.bmp");
 	}
 }
 
+//entry point of program, calls event handler and loops drawing
 int main(int argc, char *argv[]) {
 	DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 	SDL_Event event;
