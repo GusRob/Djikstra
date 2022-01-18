@@ -10,6 +10,7 @@
 
 std::string currentMap = "";
 Graph map = Graph();
+int locationSize = 7;
 
 //splits a string into a vector of integers
 std::vector<int> split(std::string in, char del){
@@ -54,7 +55,7 @@ void updateMap(std::string newMap){
 					if(reading == "locations"){
 						map.points.push_back(Point(elements[0], elements[1], point_count++));
 					} else if(reading == "roads"){
-						map.arcs.push_back(Arc(elements[0], elements[1], arc_count++, bool(elements[2])));
+						map.arcs.push_back(Arc(map.points[elements[0]], map.points[elements[1]], arc_count++, bool(elements[2])));
 					}
 				}
 				//
@@ -68,12 +69,12 @@ void updateMap(std::string newMap){
 	}
 }
 
+//packs Colour object into unsigned int colours
+uint32_t packCol(Colour col){ return (255 << 24) + (int(col.red) << 16) + (int(col.green) << 8) + int(col.blue); }
+
 //circle drawing function, takes enter x and y as well as a radius
-void drawCircle(DrawingWindow &window, int cx, int cy, int r){
-	float red = 255;
-	float green = 255;
-	float blue = 255;
-	uint32_t colour = (255 << 24) + (int(red) << 16) + (int(green) << 8) + int(blue);
+void drawCircle(DrawingWindow &window, int cx, int cy, int r, Colour col){
+	uint32_t colour = packCol(col);
 	for(int y = cy-r; y < cy+r; y++){
 		for(int x = cx-r; x < cx+r; x++){
 			float dist = sqrt((cy-y)*(cy-y) + (cx-x)*(cx-x));
@@ -84,11 +85,56 @@ void drawCircle(DrawingWindow &window, int cx, int cy, int r){
 	}
 }
 
+//linear interpolation function used for line drawing func
+std::vector<int> linearInterp(float start, float end, int count){
+	float step = (end-start)/count;
+	std::vector<int> result;
+	for(int i = 0; i < count; i++){
+		result.push_back( (int)(start + i*step) );
+	}
+	return result;
+}
+
+//line drawing function, doesnt have perfect rasterization but does the job
+void drawLine(DrawingWindow &window, int p1x, int p1y, int p2x, int p2y, int width, Colour col){
+	int maxDiff = std::max(std::abs(p1x-p2x), std::abs(p1y-p2y));
+	std::vector<int> xs = linearInterp(p1x, p2x, maxDiff);
+	std::vector<int> ys = linearInterp(p1y, p2y, maxDiff);
+	uint32_t colour = packCol(col);
+	for(int i = 0; i < maxDiff; i++){
+		window.setPixelColour(xs[i], ys[i], colour);
+	}
+}
+
 //main draw function for page refreshes
 void draw(DrawingWindow &window) {
 	window.clearPixels();
+	//define colours
+	Colour white = Colour(255, 255, 255);
+	Colour red = Colour(255, 0, 0);
+	Colour green = Colour(255, 0, 255);
+	//draw arcs
+	for(int i = 0; i < map.arcs.size(); i++){
+		Arc a = map.arcs[i];
+		if(a.inRoute){
+			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, locationSize, red);
+		} else {
+			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, locationSize, white);
+		}
+	}
+	//draw points
 	for(int i = 0; i < map.points.size(); i++){
-		drawCircle(window, map.points[i].x, map.points[i].y, 5);
+		Point p = map.points[i];
+		if(p.hover){
+			drawCircle(window, p.x, p.y, locationSize, red);
+		} else {
+			drawCircle(window, p.x, p.y, locationSize, white);
+		}
+		if(p.selected){
+			drawCircle(window, p.x, p.y, (locationSize)*3 /4, green);
+		} else {
+			drawCircle(window, p.x, p.y, (locationSize)*3 /4, white);
+		}
 	}
 }
 
@@ -100,8 +146,28 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 		else if (event.key.keysym.sym == SDLK_UP) std::cout << "UP" << std::endl;
 		else if (event.key.keysym.sym == SDLK_DOWN) std::cout << "DOWN" << std::endl;
 	} else if (event.type == SDL_MOUSEBUTTONDOWN) {
+		for(int i = 0; i < map.points.size(); i++){
+			Point p = map.points[i];
+			if(p.hover){
+				map.points[i].selected = !map.points[i].selected;
+			}
+		}
 		//window.savePPM("output.ppm");
 		//window.saveBMP("output.bmp");
+	}
+}
+
+//mouse hover/position handler
+void handleMousePos(){
+	int x, y;
+	SDL_GetMouseState(&x, &y);
+	for(int i = 0; i < map.points.size(); i++){
+		Point p = map.points[i];
+		if( (x-p.x)*(x-p.x) + (y-p.y)*(y-p.y) <= locationSize*locationSize ){
+			map.points[i].hover = true;
+		} else {
+			map.points[i].hover = false;
+		}
 	}
 }
 
@@ -113,6 +179,7 @@ int main(int argc, char *argv[]) {
 	while (true) {
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, window);
+		handleMousePos();
 		draw(window);
 		// Need to render the frame at the end, or nothing actually gets shown on the screen !
 		window.renderFrame();
