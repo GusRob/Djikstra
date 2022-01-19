@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include "SDL.h"
+#include "SDL_image.h"
 
 class DrawingWindow {
 

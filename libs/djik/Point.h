@@ -9,6 +9,7 @@ struct Point {
 	int id{};
 	bool hover = false;
 	bool selected = false;
+	bool visited = false;
 	Point();
 	Point(int x, int y, int id);
 	Point(std::string n, int x, int y, int id);

@@ -6,6 +6,7 @@ DrawingWindow::DrawingWindow() {}
 
 DrawingWindow::DrawingWindow(int w, int h, bool fullscreen) : width(w), height(h), pixelBuffer(w * h) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) printMessageAndQuit("Could not initialise SDL: ", SDL_GetError());
+	IMG_Init(IMG_INIT_JPG);
 	uint32_t flags = SDL_WINDOW_OPENGL;
 	if (fullscreen) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	int ANYWHERE = SDL_WINDOWPOS_UNDEFINED;
@@ -61,6 +62,7 @@ bool DrawingWindow::pollForInputEvents(SDL_Event &event) {
 			SDL_DestroyTexture(texture);
 			SDL_DestroyRenderer(renderer);
 			SDL_DestroyWindow(window);
+			IMG_Quit();
 			SDL_Quit();
 			printMessageAndQuit("Exiting", nullptr);
 		}

@@ -8,9 +8,16 @@
 #define WIDTH 600
 #define HEIGHT 600
 
+//graph global vars
 std::string currentMap = "";
 Graph map = Graph();
 int locationSize = 7;
+int selectedCount = 0;
+
+//button global vars
+bool buttonHover[] = {false, false, false};
+bool buttonSelect[] = {false, false, false};
+int noOfButtons = 3;
 
 //splits a string into a vector of integers
 std::vector<int> split(std::string in, char del){
@@ -28,10 +35,26 @@ std::vector<int> split(std::string in, char del){
 	return result;
 }
 
+//cleanses graph points and arcs
+void cleanMap(){
+	//clear points
+	for(int i = 0; i < map.points.size(); i++){
+		map.points[i].selected = false;
+		map.points[i].visited = false;
+	}
+	//clear arcs
+	for(int i = 0; i < map.arcs.size(); i++){
+		map.arcs[i].inRoute = false;
+	}
+	//reset selectedCount
+	selectedCount = 0;
+}
+
 //updates the current map image and graph by reading the new file
 void updateMap(std::string newMap){
 	if(currentMap != newMap){
 		currentMap = newMap;
+		map = Graph();
 		//open inputfilestream
 		std::ifstream ifs ("assets/" + newMap + "/" + newMap + "_graph.txt", std::ifstream::in);
 		//start reading chars
@@ -44,7 +67,7 @@ void updateMap(std::string newMap){
 		int arc_count = 0;
 		while(ifs.good()){
 			if(c == '\n' || c == ' '){
-				//if graph read mode update
+				//end of word
 				if(currentWord == "locations:"){
 					reading = "locations";
 				} else if(currentWord == "roads:"){
@@ -58,14 +81,16 @@ void updateMap(std::string newMap){
 						map.arcs.push_back(Arc(map.points[elements[0]], map.points[elements[1]], arc_count++, bool(elements[2])));
 					}
 				}
-				//
 				currentWord = "";
 			} else {
+				//add to word
 				currentWord.append(1, c);
 			}
 			c = ifs.get();
 		}
 		ifs.close();
+	} else {
+		cleanMap();
 	}
 }
 
@@ -78,7 +103,7 @@ void drawCircle(DrawingWindow &window, int cx, int cy, int r, Colour col){
 	for(int y = cy-r; y < cy+r; y++){
 		for(int x = cx-r; x < cx+r; x++){
 			float dist = sqrt((cy-y)*(cy-y) + (cx-x)*(cx-x));
-			if(dist < r){
+			if(dist <= r){
 				window.setPixelColour(x, y, colour);
 			}
 		}
@@ -96,7 +121,7 @@ std::vector<int> linearInterp(float start, float end, int count){
 }
 
 //line drawing function, doesnt have perfect rasterization but does the job
-void drawLine(DrawingWindow &window, int p1x, int p1y, int p2x, int p2y, int width, Colour col){
+void drawLine(DrawingWindow &window, int p1x, int p1y, int p2x, int p2y, Colour col){
 	int maxDiff = std::max(std::abs(p1x-p2x), std::abs(p1y-p2y));
 	std::vector<int> xs = linearInterp(p1x, p2x, maxDiff);
 	std::vector<int> ys = linearInterp(p1y, p2y, maxDiff);
@@ -106,20 +131,34 @@ void drawLine(DrawingWindow &window, int p1x, int p1y, int p2x, int p2y, int wid
 	}
 }
 
+//rectangle filling function,
+void fillRect(DrawingWindow &window, int x, int y, int w, int h, Colour col){
+	uint32_t colour = packCol(col);
+	for(int i = 0; i < w; i++){
+		for(int j = 0; j < h; j++){
+			window.setPixelColour(x + i, y + j, colour);
+		}
+	}
+}
+
 //main draw function for page refreshes
 void draw(DrawingWindow &window) {
 	window.clearPixels();
 	//define colours
 	Colour white = Colour(255, 255, 255);
+	Colour midGray = Colour(178, 178, 178);
+	Colour darkGray = Colour(126, 126, 126);
 	Colour red = Colour(255, 0, 0);
 	Colour green = Colour(255, 0, 255);
+	//draw background
+	//IMAGE STUFF
 	//draw arcs
 	for(int i = 0; i < map.arcs.size(); i++){
 		Arc a = map.arcs[i];
 		if(a.inRoute){
-			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, locationSize, red);
+			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, red);
 		} else {
-			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, locationSize, white);
+			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, white);
 		}
 	}
 	//draw points
@@ -136,24 +175,64 @@ void draw(DrawingWindow &window) {
 			drawCircle(window, p.x, p.y, (locationSize)*3 /4, white);
 		}
 	}
+	//draw buttons
+	for(int i = 0; i < noOfButtons; i++){
+		Colour buttonCol = white;
+		if(buttonSelect[i]){
+			buttonCol = white;
+		} else if(buttonHover[i]){
+			buttonCol = darkGray;
+		} else {
+			buttonCol = midGray;
+		}
+		fillRect(window, i*101, 0, 100, 100, buttonCol);
+	}
+	//draw button icons
+	//IMAGE STUFF
 }
 
 //event handler, after initial cleanse for quit function
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
+		//keypress handlers
 		if (event.key.keysym.sym == SDLK_LEFT) std::cout << "LEFT" << std::endl;
 		else if (event.key.keysym.sym == SDLK_RIGHT) std::cout << "RIGHT" << std::endl;
 		else if (event.key.keysym.sym == SDLK_UP) std::cout << "UP" << std::endl;
 		else if (event.key.keysym.sym == SDLK_DOWN) std::cout << "DOWN" << std::endl;
 	} else if (event.type == SDL_MOUSEBUTTONDOWN) {
+		//mouseclick handlers
+		//graph points
+		bool graphSelected = false;
 		for(int i = 0; i < map.points.size(); i++){
 			Point p = map.points[i];
 			if(p.hover){
+				if(selectedCount >= 2){
+					cleanMap();
+				}
 				map.points[i].selected = !map.points[i].selected;
+				selectedCount++;
+				graphSelected = true;
 			}
 		}
-		//window.savePPM("output.ppm");
-		//window.saveBMP("output.bmp");
+		//buttons
+		for(int i = 0; i < noOfButtons; i++){
+			if(buttonHover[i]){
+				buttonSelect[i] = true;
+				if(i == 0){
+					cleanMap();
+				} else if(i == 1){
+					updateMap("example");
+				} else if(i == 2){
+					updateMap("uk");
+				}
+			}
+		}
+	} else if(event.type == SDL_MOUSEBUTTONUP){
+		//mouserelease handlers
+		//buttons
+		for(int i = 0; i < noOfButtons; i++){
+			buttonSelect[i] = false;
+		}
 	}
 }
 
@@ -167,6 +246,13 @@ void handleMousePos(){
 			map.points[i].hover = true;
 		} else {
 			map.points[i].hover = false;
+		}
+	}
+	for(int i = 0; i < noOfButtons; i++){
+		if(x >= i*101 && x < (i+1)*101 && y <= 100){
+			buttonHover[i] = true;
+		} else {
+			buttonHover[i] = false;
 		}
 	}
 }

@@ -9,4 +9,6 @@ struct Graph {
   std::vector<Arc> arcs{};
   std::vector<Point> points{};
 	Graph();
+
+  std::vector<Arc> djikstra(Point a, Point b);
 };
