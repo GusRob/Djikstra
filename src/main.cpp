@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 #include <Graph.h>
+#include <limits>
 
 #define WIDTH 600
 #define HEIGHT 600
@@ -41,6 +42,7 @@ void cleanMap(){
 	for(int i = 0; i < map.points.size(); i++){
 		map.points[i].selected = false;
 		map.points[i].visited = false;
+		map.points[i].dist = std::numeric_limits<float>::infinity();
 	}
 	//clear arcs
 	for(int i = 0; i < map.arcs.size(); i++){
@@ -78,7 +80,7 @@ void updateMap(std::string newMap){
 					if(reading == "locations"){
 						map.points.push_back(Point(elements[0], elements[1], point_count++));
 					} else if(reading == "roads"){
-						map.arcs.push_back(Arc(map.points[elements[0]], map.points[elements[1]], arc_count++, bool(elements[2])));
+						map.arcs.push_back(Arc(&map.points[elements[0]], &map.points[elements[1]], arc_count++, bool(elements[2])));
 					}
 				}
 				currentWord = "";
@@ -156,9 +158,9 @@ void draw(DrawingWindow &window) {
 	for(int i = 0; i < map.arcs.size(); i++){
 		Arc a = map.arcs[i];
 		if(a.inRoute){
-			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, red);
+			drawLine(window, a.p1->x, a.p1->y, a.p2->x, a.p2->y, red);
 		} else {
-			drawLine(window, a.p1.x, a.p1.y, a.p2.x, a.p2.y, white);
+			drawLine(window, a.p1->x, a.p1->y, a.p2->x, a.p2->y, white);
 		}
 	}
 	//draw points
@@ -191,6 +193,10 @@ void draw(DrawingWindow &window) {
 	//IMAGE STUFF
 }
 
+void setRoute(Point *a, Point *b){
+	std::vector<Arc *> route = map.djikstra(a, b);
+}
+
 //event handler, after initial cleanse for quit function
 void handleEvent(SDL_Event event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
@@ -204,14 +210,23 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 		//graph points
 		bool graphSelected = false;
 		for(int i = 0; i < map.points.size(); i++){
-			Point p = map.points[i];
-			if(p.hover){
+			Point *p = &map.points[i];
+			if(p->hover){
 				if(selectedCount >= 2){
 					cleanMap();
 				}
 				map.points[i].selected = !map.points[i].selected;
 				selectedCount++;
 				graphSelected = true;
+				if(selectedCount == 2){
+					Point *q = p;
+					for(int j = 0; j < map.points.size(); j++){
+						if(map.points[j].id != p->id && map.points[j].selected){
+							q = &map.points[j];
+						}
+					}
+					setRoute(q, p);
+				}
 			}
 		}
 		//buttons

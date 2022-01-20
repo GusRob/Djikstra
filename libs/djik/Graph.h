@@ -6,9 +6,10 @@
 #include <Point.h>
 
 struct Graph {
-  std::vector<Arc> arcs{};
-  std::vector<Point> points{};
+	std::vector<Arc> arcs{};
+	std::vector<Point> points{};
 	Graph();
-
-  std::vector<Arc> djikstra(Point a, Point b);
+	std::vector<Arc *> arcsFrom(Point * p);
+	std::vector<Arc *> arcsTo(Point * p);
+	std::vector<Arc *> djikstra(Point *a, Point *b);
 };
