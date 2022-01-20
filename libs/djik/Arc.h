@@ -9,9 +9,11 @@ struct Arc {
 	Point *p2{};
 	int id{};
 	bool bi_dir{};
+	float preloaded_length = 1;
 	bool inRoute = false;
 	Arc();
 	Arc(Point *p1, Point *p2, int id, bool bi_dir);
+	float length(int mode);
 };
 
 std::ostream &operator<<(std::ostream &os, const Arc &Arc);

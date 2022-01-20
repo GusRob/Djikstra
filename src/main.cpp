@@ -13,12 +13,21 @@
 std::string currentMap = "";
 Graph map = Graph();
 int locationSize = 7;
-int selectedCount = 0;
+Point *start = NULL;
+Point *end = NULL;
+	//0 = least arcs
+	//1 = shortest physical distance travelled (ie cartesian between points)
+	//2 = shortest route using lengths from asset file
 
-//button global vars
-bool buttonHover[] = {false, false, false};
-bool buttonSelect[] = {false, false, false};
-int noOfButtons = 3;
+//top button global vars
+bool topButtonHover[] = {false, false, false};
+bool topButtonSelect[] = {false, false, false};
+int noOfTopButtons = 3;
+
+//bottom button global vars
+bool botButtonHover[] = {false, false, false};
+bool botButtonSelect[] = {false, false, false};
+int noOfBotButtons = 3;
 
 //splits a string into a vector of integers
 std::vector<int> split(std::string in, char del){
@@ -48,13 +57,15 @@ void cleanMap(){
 	for(int i = 0; i < map.arcs.size(); i++){
 		map.arcs[i].inRoute = false;
 	}
-	//reset selectedCount
-	selectedCount = 0;
+	//reset start and end
+	start = NULL;
+	end = NULL;
 }
 
 //updates the current map image and graph by reading the new file
 void updateMap(std::string newMap){
 	if(currentMap != newMap){
+		cleanMap();
 		currentMap = newMap;
 		map = Graph();
 		//open inputfilestream
@@ -178,21 +189,33 @@ void draw(DrawingWindow &window) {
 		}
 	}
 	//draw buttons
-	for(int i = 0; i < noOfButtons; i++){
+	for(int i = 0; i < noOfTopButtons; i++){
 		Colour buttonCol = white;
-		if(buttonSelect[i]){
+		if(topButtonSelect[i]){
 			buttonCol = white;
-		} else if(buttonHover[i]){
+		} else if(topButtonHover[i]){
 			buttonCol = darkGray;
 		} else {
 			buttonCol = midGray;
 		}
 		fillRect(window, i*101, 0, 100, 100, buttonCol);
 	}
+	for(int i = 0; i < noOfBotButtons; i++){
+		Colour buttonCol = white;
+		if(botButtonSelect[i]){
+			buttonCol = white;
+		} else if(botButtonHover[i]){
+			buttonCol = darkGray;
+		} else {
+			buttonCol = midGray;
+		}
+		fillRect(window, i*101, HEIGHT-100, 100, 100, buttonCol);
+	}
 	//draw button icons
 	//IMAGE STUFF
 }
 
+//function calls djikstras algorithm and calculates rote length etc
 void setRoute(Point *a, Point *b){
 	std::vector<Arc *> route = map.djikstra(a, b);
 }
@@ -208,31 +231,29 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 	} else if (event.type == SDL_MOUSEBUTTONDOWN) {
 		//mouseclick handlers
 		//graph points
-		bool graphSelected = false;
 		for(int i = 0; i < map.points.size(); i++){
-			Point *p = &map.points[i];
-			if(p->hover){
-				if(selectedCount >= 2){
+			if(map.points[i].hover){
+				if(end != NULL){
 					cleanMap();
 				}
-				map.points[i].selected = !map.points[i].selected;
-				selectedCount++;
-				graphSelected = true;
-				if(selectedCount == 2){
-					Point *q = p;
-					for(int j = 0; j < map.points.size(); j++){
-						if(map.points[j].id != p->id && map.points[j].selected){
-							q = &map.points[j];
-						}
+				if(map.points[i].selected){
+					map.points[i].selected = false;
+					cleanMap();
+				} else {
+					map.points[i].selected = true;
+					if(start == NULL){
+						start = &map.points[i];
+					} else if(end == NULL){
+						end = &map.points[i];
+						setRoute(start, end);
 					}
-					setRoute(q, p);
 				}
 			}
 		}
 		//buttons
-		for(int i = 0; i < noOfButtons; i++){
-			if(buttonHover[i]){
-				buttonSelect[i] = true;
+		for(int i = 0; i < noOfTopButtons; i++){
+			if(topButtonHover[i]){
+				topButtonSelect[i] = true;
 				if(i == 0){
 					cleanMap();
 				} else if(i == 1){
@@ -241,12 +262,35 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 					updateMap("uk");
 				}
 			}
+			if(botButtonHover[i]){
+				botButtonSelect[i] = true;
+				Point *start_temp = start;
+				Point *end_temp = end;
+				cleanMap();
+				if(i == 0){
+					map.routeMode = 0;
+				} else if(i == 1){
+					map.routeMode = 1;
+				} else if(i == 2){
+					map.routeMode = 2;
+				}
+				start = start_temp;
+				if(start != NULL){
+					start->selected = true;
+				}
+				end = end_temp;
+				if(end != NULL){
+					end->selected = true;
+					setRoute(start, end);
+				}
+			}
 		}
 	} else if(event.type == SDL_MOUSEBUTTONUP){
 		//mouserelease handlers
 		//buttons
-		for(int i = 0; i < noOfButtons; i++){
-			buttonSelect[i] = false;
+		for(int i = 0; i < noOfTopButtons; i++){
+			topButtonSelect[i] = false;
+			botButtonSelect[i] = false;
 		}
 	}
 }
@@ -263,11 +307,18 @@ void handleMousePos(){
 			map.points[i].hover = false;
 		}
 	}
-	for(int i = 0; i < noOfButtons; i++){
+	for(int i = 0; i < noOfTopButtons; i++){
 		if(x >= i*101 && x < (i+1)*101 && y <= 100){
-			buttonHover[i] = true;
+			topButtonHover[i] = true;
 		} else {
-			buttonHover[i] = false;
+			topButtonHover[i] = false;
+		}
+	}
+	for(int i = 0; i < noOfBotButtons; i++){
+		if(x >= i*101 && x < (i+1)*101 && y >= HEIGHT-100){
+			botButtonHover[i] = true;
+		} else {
+			botButtonHover[i] = false;
 		}
 	}
 }
