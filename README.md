@@ -16,7 +16,7 @@ Intended completion point for this project:
  - [X] User can toggle graph between different options
  - [X] CUser can click on a location to select
  - [X] Clear button removes any selected points
- - [ ] Map from assets is shown in background
+ - [X] Map from assets is shown in background
  - [ ] Icons are shown on each button
- - [ ] Once two points are selected, fastest route between those points is calculated
+ - [X] Once two points are selected, fastest route between those points is calculated
  - [ ] Terminal output shows route length and other info
