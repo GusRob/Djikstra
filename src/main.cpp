@@ -164,7 +164,7 @@ void draw(DrawingWindow &window) {
 	Colour red = Colour(255, 0, 0);
 	Colour green = Colour(255, 0, 255);
 	//draw background
-	//IMAGE STUFF
+	window.drawIMG("assets/" + currentMap + "/" + currentMap + "_map.png", 0, 0, 600, 600);
 	//draw arcs
 	for(int i = 0; i < map.arcs.size(); i++){
 		Arc a = map.arcs[i];
@@ -212,7 +212,9 @@ void draw(DrawingWindow &window) {
 		fillRect(window, i*101, HEIGHT-100, 100, 100, buttonCol);
 	}
 	//draw button icons
-	//IMAGE STUFF
+	window.drawIMG("assets/refreshicon.png", 5, 5, 90, 90);
+	window.drawIMG("assets/example/example_map.png", 106, 5, 90, 90);
+	window.drawIMG("assets/uk/uk_map.png", 207, 5, 90, 90);
 }
 
 //function calls djikstras algorithm and calculates rote length etc
