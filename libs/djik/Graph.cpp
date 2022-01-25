@@ -72,12 +72,12 @@ std::vector<Arc *> Graph::djikstra(Point *a, Point *b){
 		std::vector<Arc *> arcsToCurrent = arcsTo(currentPoint);
 		for(int i = 0; i < arcsToCurrent.size(); i++){
 			Arc *c = arcsToCurrent[i];
-			if(c->p1->id == currentPoint->id && fabs((c->p2->dist) - (currentPoint->dist-c->length(routeMode))) <= 0.005f){
+			if(c->p1->id == currentPoint->id && fabs((c->p2->dist) - ((currentPoint->dist)-(c->length(routeMode)))) <= 0.005f){
 				c->inRoute = true;
 				result.push_back(c);
 				currentPoint = c->p2;
 				break;
-			} else if(c->p2->id == currentPoint->id && fabs((c->p1->dist) - (currentPoint->dist-c->length(routeMode))) <= 0.005f){
+			} else if(c->p2->id == currentPoint->id && fabs((c->p1->dist) - ((currentPoint->dist)-(c->length(routeMode)))) <= 0.005f){
 				c->inRoute = true;
 				result.push_back(c);
 				currentPoint = c->p1;

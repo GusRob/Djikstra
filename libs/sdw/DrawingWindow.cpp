@@ -93,24 +93,20 @@ void DrawingWindow::drawIMG(const std::string &filename, int imX, int imY, int i
 	if (image == nullptr) {
 		std::cout << "IMG_Load: " << IMG_GetError() << "\n";
 	} else {
-		if(imX < 0 || imY < 0 || imX+imW > width || imY+imH > height){
-			std::cout << "IMG out of bounds" << std::endl;
-		} else {
-			SDL_Surface* formattedImage = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
-			Uint32* pixels = (Uint32 *) formattedImage->pixels;
-			int actualImWidth = formattedImage->w;
-			int actualImHeight = formattedImage->h;
-			for(int y = 0; y < imH; y++){
-				for(int x = 0; x < imW; x++){
-					Uint32 pixelCol = pixels[actualImWidth * (int)( ((float)y/(float)imH)*actualImHeight ) + (int)( ((float)x/(float)imW)*actualImWidth )];
-					if(pixelCol != 16777215 && pixelCol != 0){
-						pixelBuffer[width * (imY+y) + (imX+x)] = pixelCol;
-					}
+		SDL_Surface* formattedImage = SDL_ConvertSurfaceFormat(image, SDL_PIXELFORMAT_ARGB8888, 0);
+		Uint32* pixels = (Uint32 *) formattedImage->pixels;
+		int actualImWidth = formattedImage->w;
+		int actualImHeight = formattedImage->h;
+		for(int y = 0; y < imH; y++){
+			for(int x = 0; x < imW; x++){
+				Uint32 pixelCol = pixels[actualImWidth * (int)( ((float)y/(float)imH)*actualImHeight ) + (int)( ((float)x/(float)imW)*actualImWidth )];
+				if(pixelCol != 16777215 && pixelCol != 0){
+					pixelBuffer[width * (imY+y) + (imX+x)] = pixelCol;
 				}
 			}
-			SDL_UnlockSurface(formattedImage);
-			SDL_FreeSurface(formattedImage);
 		}
+		SDL_UnlockSurface(formattedImage);
+		SDL_FreeSurface(formattedImage);
 	}
 	SDL_FreeSurface(image);
 }

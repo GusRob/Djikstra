@@ -18,6 +18,7 @@ private:
 	SDL_Texture *texture;
 	std::vector<uint32_t> pixelBuffer;
 
+
 public:
 	DrawingWindow();
 	DrawingWindow(int w, int h, bool fullscreen);

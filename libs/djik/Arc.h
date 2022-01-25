@@ -12,7 +12,7 @@ struct Arc {
 	float preloaded_length = 1;
 	bool inRoute = false;
 	Arc();
-	Arc(Point *p1, Point *p2, int id, bool bi_dir);
+	Arc(Point *p1, Point *p2, int id, bool bi_dir, int len);
 	float length(int mode);
 };
 

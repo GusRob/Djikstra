@@ -3,7 +3,7 @@
 #include <math.h>
 
 Arc::Arc() = default;
-Arc::Arc(Point *initP1, Point *initP2, int initID, bool initDir) : p1(initP1), p2(initP2), id(initID), bi_dir(initDir) {}
+Arc::Arc(Point *initP1, Point *initP2, int initID, bool initDir, int initLen) : p1(initP1), p2(initP2), id(initID), bi_dir(initDir), preloaded_length(initLen) {}
 
 float Arc::length(int routeMode){
 	if(routeMode == 0){

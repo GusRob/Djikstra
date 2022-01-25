@@ -91,7 +91,7 @@ void updateMap(std::string newMap){
 					if(reading == "locations"){
 						map.points.push_back(Point(elements[0], elements[1], point_count++));
 					} else if(reading == "roads"){
-						map.arcs.push_back(Arc(&map.points[elements[0]], &map.points[elements[1]], arc_count++, bool(elements[2])));
+						map.arcs.push_back(Arc(&map.points[elements[0]], &map.points[elements[1]], arc_count++, bool(elements[2]), elements[3]));
 					}
 				}
 				currentWord = "";
@@ -164,7 +164,7 @@ void draw(DrawingWindow &window) {
 	Colour red = Colour(255, 0, 0);
 	Colour green = Colour(255, 0, 255);
 	//draw background
-	window.drawIMG("assets/" + currentMap + "/" + currentMap + "_map.png", 0, 0, 600, 600);
+	window.drawIMG("assets/" + currentMap + "/" + currentMap + "_map.png", 100, 100, 400, 400);
 	//draw arcs
 	for(int i = 0; i < map.arcs.size(); i++){
 		Arc a = map.arcs[i];
@@ -173,6 +173,7 @@ void draw(DrawingWindow &window) {
 		} else {
 			drawLine(window, a.p1->x, a.p1->y, a.p2->x, a.p2->y, white);
 		}
+		//ADD TEXT ARC WEIGHTS
 	}
 	//draw points
 	for(int i = 0; i < map.points.size(); i++){
@@ -212,9 +213,14 @@ void draw(DrawingWindow &window) {
 		fillRect(window, i*101, HEIGHT-100, 100, 100, buttonCol);
 	}
 	//draw button icons
-	window.drawIMG("assets/refreshicon.png", 5, 5, 90, 90);
+	window.drawIMG("assets/buttonicons/refreshicon.png", 5, 5, 90, 90);
 	window.drawIMG("assets/example/example_map.png", 106, 5, 90, 90);
 	window.drawIMG("assets/uk/uk_map.png", 207, 5, 90, 90);
+	window.drawIMG("assets/buttonicons/least.png", 5, 500, 90, 60);
+	window.drawIMG("assets/buttonicons/arcs.png", 5, 545, 90, 60);
+	window.drawIMG("assets/buttonicons/shortest.png", 106, 500, 90, 130);
+	window.drawIMG("assets/buttonicons/custom.png", 207, 500, 90, 130);
+
 }
 
 //function calls djikstras algorithm and calculates rote length etc

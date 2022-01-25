@@ -30,7 +30,7 @@ DJIK_COMPILER_FLAGS := -I$(DJIK_DIR)
 SDL_COMPILER_FLAGS := $(shell sdl2-config --cflags)
 # If you have a manual install of SDL, you might not have sdl2-config installed, so the following line might not work
 # Linker flags should look something like: -L/usr/local/lib -lSDL2
-SDL_LINKER_FLAGS := -lSDL2_image $(shell sdl2-config --libs)
+SDL_LINKER_FLAGS := -lSDL2_image -lSDL2_ttf $(shell sdl2-config --libs)
 SDW_LINKER_FLAGS := $(SDW_OBJECT_FILES)
 DJIK_LINKER_FLAGS := $(DJIK_OBJECT_FILES)
 
