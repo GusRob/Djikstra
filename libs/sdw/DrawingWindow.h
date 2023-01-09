@@ -5,6 +5,7 @@
 #include <vector>
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 
 class DrawingWindow {
 
@@ -29,6 +30,7 @@ public:
 	void setPixelColour(size_t x, size_t y, uint32_t colour);
 	uint32_t getPixelColour(size_t x, size_t y);
 	void drawIMG(const std::string &filename, int x, int y, int w, int h);
+	void drawText(const std::string &text, int x, int y, int w, int h);
 	void clearPixels();
 };
 
